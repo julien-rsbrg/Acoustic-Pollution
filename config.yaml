@@ -1,0 +1,30 @@
+EXPERIMENT_ID: 0
+DST_FOLDER: C:/Users/jtros/CS/cours/Cours_de_2A/EI_ST5/Acoustic-Pollution/results/
+
+GEOMETRY: 
+  N_POINTS_AXIS_X: 50
+  LEVEL: 2
+  MATERIAL: CONCRETE
+  
+PDE:
+  # KX: -1.0 # old code if we want to change the incidence
+  # KY: -1.0
+  WAVENUMBER: 10.0
+  INCIDENT_WAVE: planar # planar by default, you can put spherical too
+
+OPTIMIZATION:
+  NBRE_ITER: 10
+
+  # learning rate 
+  INIT_MU: 0.5
+  MIN_MU: 1.0e-10
+
+  # Volume inside domain
+  MU1_VOLUME_CONSTRAINT: 0
+
+  # Volume of porous material
+  TOLERANCE_ERROR_VOLUME_CHI: 1.0e-3
+  STEP_LAGRANGE_MULTIPLIER: 1.0e-3
+
+  
+

@@ -425,7 +425,31 @@ def solve_helmholtz(domain, space_step, omega,
             # or domain[i, j] == _env.NODE_ROBIN
             if is_in_interior_domain(domain[i, j]):
                 u[i, j] = sol[row]
+    
+    for i in range(0, M):
+        u[i,0] = u[i, 1]
+        u[i,N-1] = u[i, N-2]
+    for j in range(0, N):
+        u[0,j] = u[1, j]
+        u[M-1, j] = u[M-2, j]
+    for i in range(1, M-1):
+        for j in range(1, N-1):
+            if not is_in_interior_domain(domain[i, j]):
+                found = False
+                coords = [(i+1, j), (i-1, j), (i, j-1), (i, j+1)]
+                for coord in coords:
+                    if is_in_interior_domain(domain[coord[0], coord[1]]):
+                        u[i, j] = u[coord[0], coord[1]]
+                        found = True
+                        break
+                if not found:
+                    coins = [(i+1, j-1), (i-1, j+1),(i+1, j+1), (i-1, j-1)]
+                    for coin in coins:
+                        if is_in_interior_domain(domain[coin[0], coin[1]]):
+                            u[i, j] = u[coin[0], coin[1]]
+                            break
     return u
+
 
 
 def get_nearest_point_inside(i, j, domain_omega):

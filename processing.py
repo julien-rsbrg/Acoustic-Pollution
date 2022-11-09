@@ -123,7 +123,7 @@ def compute_stiffness_matrix(domain, space_step, f, beta_pde):
                 mat[row, row + 1] = 1.0 * beta_pde[i, j + 1]
                 mat[row, row + N] = 1.0 * beta_pde[i + 1, j]
                 mat[row, row - N] = 1.0 * beta_pde[i - 1, j]
-                rhs[row] = h ** 2 * f[i, j]
+                rhs[row] = h**2 * f[i, j]
             else:
                 mat[row, row] = 1.0
                 rhs[row] = 0.0
@@ -150,7 +150,7 @@ def compute_mass_matrix(domain, space_step, alpha_pde):
         for j in range(0, N):
             row = i * N + j
             if is_in_interior_domain(domain[i, j]):
-                mat[row, row] = 1.0 * h ** 2 * alpha_pde[i, j]
+                mat[row, row] = 1.0 * h**2 * alpha_pde[i, j]
 
     return mat, rhs
 
@@ -165,7 +165,7 @@ def compute_vgradu_matrix(domain, space_step, v):
         for j in range(0, N):
             row = i * N + j
             if is_in_interior_domain(domain[i, j]):
-                mat[row, row] = - 2.0 * h * (v[i, j, 0] + v[i, j, 1])
+                mat[row, row] = -2.0 * h * (v[i, j, 0] + v[i, j, 1])
                 mat[row, row + 1] = h * v[i, j, 0]
                 mat[row, row + N] = h * v[i, j, 1]
                 if not is_in_interior_domain(domain[i + 1, j]):
@@ -266,7 +266,9 @@ def compute_neumann_condition(domain, space_step, f_neu, beta_neu, beta_pde, mat
     return mat, rhs
 
 
-def compute_robin_condition(domain, space_step, f_rob, alpha_rob, beta_rob, beta_pde, mat, rhs):
+def compute_robin_condition(
+    domain, space_step, f_rob, alpha_rob, beta_rob, beta_pde, mat, rhs
+):
     """
     This function generate the robin boundary condition.
 
@@ -294,35 +296,79 @@ def compute_robin_condition(domain, space_step, f_rob, alpha_rob, beta_rob, beta
                 row = i * N + j
                 if north:
                     mat[row, row - N] -= beta_pde[i - 1, j]
-                    mat[row, row] += beta_pde[i, j] + (alpha_rob[i - 1, j] / beta_pde[i, j]) * h / (
-                        beta_rob[i - 1, j] - (alpha_rob[i - 1, j] / beta_pde[i, j] * h))
-                    rhs[row] += (h / (beta_rob[i - 1, j] - ((alpha_rob[i - 1, j] / beta_pde[i, j]) * h))) * f_rob[
-                        i - 1, j]
+                    mat[row, row] += beta_pde[i, j] + (
+                        alpha_rob[i - 1, j] / beta_pde[i, j]
+                    ) * h / (
+                        beta_rob[i - 1, j] - (alpha_rob[i - 1, j] / beta_pde[i, j] * h)
+                    )
+                    rhs[row] += (
+                        h
+                        / (
+                            beta_rob[i - 1, j]
+                            - ((alpha_rob[i - 1, j] / beta_pde[i, j]) * h)
+                        )
+                    ) * f_rob[i - 1, j]
                 if south:
                     mat[row, row + N] -= beta_pde[i + 1, j]
-                    mat[row, row] += beta_pde[i, j] + (alpha_rob[i + 1, j] / beta_pde[i, j]) * h / (
-                        beta_rob[i + 1, j] - (alpha_rob[i + 1, j] / beta_pde[i, j] * h))
-                    rhs[row] += (h / (beta_rob[i + 1, j] - ((alpha_rob[i + 1, j] / beta_pde[i, j]) * h))) * f_rob[
-                        i + 1, j]
+                    mat[row, row] += beta_pde[i, j] + (
+                        alpha_rob[i + 1, j] / beta_pde[i, j]
+                    ) * h / (
+                        beta_rob[i + 1, j] - (alpha_rob[i + 1, j] / beta_pde[i, j] * h)
+                    )
+                    rhs[row] += (
+                        h
+                        / (
+                            beta_rob[i + 1, j]
+                            - ((alpha_rob[i + 1, j] / beta_pde[i, j]) * h)
+                        )
+                    ) * f_rob[i + 1, j]
                 if east:
                     mat[row, row + 1] -= beta_pde[i, j + 1]
-                    mat[row, row] += beta_pde[i, j] + (alpha_rob[i, j + 1] / beta_pde[i, j]) * h / (
-                        beta_rob[i, j + 1] - (alpha_rob[i, j + 1] / beta_pde[i, j] * h))
-                    rhs[row] += (h / (beta_rob[i, j + 1] - ((alpha_rob[i, j + 1] / beta_pde[i, j]) * h))) * f_rob[
-                        i, j + 1]
+                    mat[row, row] += beta_pde[i, j] + (
+                        alpha_rob[i, j + 1] / beta_pde[i, j]
+                    ) * h / (
+                        beta_rob[i, j + 1] - (alpha_rob[i, j + 1] / beta_pde[i, j] * h)
+                    )
+                    rhs[row] += (
+                        h
+                        / (
+                            beta_rob[i, j + 1]
+                            - ((alpha_rob[i, j + 1] / beta_pde[i, j]) * h)
+                        )
+                    ) * f_rob[i, j + 1]
                 if west:
                     mat[row, row - 1] -= beta_pde[i, j - 1]
-                    mat[row, row] += beta_pde[i, j] + (alpha_rob[i, j - 1] / beta_pde[i, j]) * h / (
-                        beta_rob[i, j - 1] - (alpha_rob[i, j - 1] / beta_pde[i, j] * h))
-                    rhs[row] += (h / (beta_rob[i, j - 1] - ((alpha_rob[i, j - 1] / beta_pde[i, j]) * h))) * f_rob[
-                        i, j - 1]
+                    mat[row, row] += beta_pde[i, j] + (
+                        alpha_rob[i, j - 1] / beta_pde[i, j]
+                    ) * h / (
+                        beta_rob[i, j - 1] - (alpha_rob[i, j - 1] / beta_pde[i, j] * h)
+                    )
+                    rhs[row] += (
+                        h
+                        / (
+                            beta_rob[i, j - 1]
+                            - ((alpha_rob[i, j - 1] / beta_pde[i, j]) * h)
+                        )
+                    ) * f_rob[i, j - 1]
 
     return mat, rhs
 
 
-def solve_helmholtz(domain, space_step, omega,
-                    f, f_dir, f_neu, f_rob,
-                    beta_pde, alpha_pde, alpha_dir, beta_neu, beta_rob, alpha_rob):
+def solve_helmholtz(
+    domain,
+    space_step,
+    omega,
+    f,
+    f_dir,
+    f_neu,
+    f_rob,
+    beta_pde,
+    alpha_pde,
+    alpha_dir,
+    beta_neu,
+    beta_rob,
+    alpha_rob,
+):
     """
     :param domain:
     :param space_step:
@@ -342,13 +388,12 @@ def solve_helmholtz(domain, space_step, omega,
 
     (M, N) = numpy.shape(domain)
     # -- create stiffness matrix
-    mat_temp, rhs_temp = compute_stiffness_matrix(
-        domain, space_step, f, beta_pde)
+    mat_temp, rhs_temp = compute_stiffness_matrix(domain, space_step, f, beta_pde)
     mat = mat_temp
     rhs = rhs_temp
     # -- create mass matrix
     mat_temp, rhs_temp = compute_mass_matrix(domain, space_step, alpha_pde)
-    mat = mat + omega ** 2 * mat_temp
+    mat = mat + omega**2 * mat_temp
     rhs = rhs
     # -- create convection (vgradu) matrix
     # <!--
@@ -398,14 +443,15 @@ def solve_helmholtz(domain, space_step, omega,
     # -->
 
     # -- set dirichlet boundary conditions
-    mat, rhs = compute_dirichlet_condition(
-        domain, f_dir, alpha_dir, beta_pde, mat, rhs)
+    mat, rhs = compute_dirichlet_condition(domain, f_dir, alpha_dir, beta_pde, mat, rhs)
     # -- set neumann boundary conditions boundary conditions
     mat, rhs = compute_neumann_condition(
-        domain, space_step, f_neu, beta_neu, beta_pde, mat, rhs)
+        domain, space_step, f_neu, beta_neu, beta_pde, mat, rhs
+    )
     # -- set robin boundary conditions
     mat, rhs = compute_robin_condition(
-        domain, space_step, f_rob, alpha_rob, beta_rob, beta_pde, mat, rhs)
+        domain, space_step, f_rob, alpha_rob, beta_rob, beta_pde, mat, rhs
+    )
 
     # print(mat.shape[:])
 
@@ -425,48 +471,47 @@ def solve_helmholtz(domain, space_step, omega,
             # or domain[i, j] == _env.NODE_ROBIN
             if is_in_interior_domain(domain[i, j]):
                 u[i, j] = sol[row]
-    
-    for i in range(0, M):
-        u[i,0] = u[i, 1]
-        u[i,N-1] = u[i, N-2]
-    for j in range(0, N):
-        u[0,j] = u[1, j]
-        u[M-1, j] = u[M-2, j]
-    for i in range(1, M-1):
-        for j in range(1, N-1):
-            if not is_in_interior_domain(domain[i, j]):
-                found = False
-                coords = [(i+1, j), (i-1, j), (i, j-1), (i, j+1)]
-                for coord in coords:
-                    if is_in_interior_domain(domain[coord[0], coord[1]]):
-                        u[i, j] = u[coord[0], coord[1]]
-                        found = True
-                        break
-                if not found:
-                    coins = [(i+1, j-1), (i-1, j+1),(i+1, j+1), (i-1, j-1)]
-                    for coin in coins:
-                        if is_in_interior_domain(domain[coin[0], coin[1]]):
-                            u[i, j] = u[coin[0], coin[1]]
-                            break
-    return u
 
+    for i in range(0, M):
+        u[i, 0] = u[i, 1]
+        u[i, N - 1] = u[i, N - 2]
+    for j in range(0, N):
+        u[0, j] = u[1, j]
+        u[M - 1, j] = u[M - 2, j]
+    for i in range(2, M - 2):
+        for j in range(2, N - 2):
+            if not is_in_interior_domain(domain[i, j]):
+                avg = 0
+                count = 0
+                for i_lag in range(-2, 3):
+                    for j_lag in range(-2, 3):
+                        if (i_lag, j_lag) != (0, 0) and is_in_interior_domain(
+                            domain[i + i_lag, j + j_lag]
+                        ):
+                            count += 1
+                            avg += u[i + i_lag, j + j_lag]
+                if count != 0:
+                    avg = avg / count
+                u[i, j] = avg
+
+    return u
 
 
 def get_nearest_point_inside(i, j, domain_omega):
     moves = {-1, 0, 1}
     min_dist = +numpy.infty
     for i_move in moves:
-        i_cand = i+i_move
+        i_cand = i + i_move
         if i_cand >= 0 and i_cand < domain_omega.shape[0]:
             for j_move in moves:
-                j_cand = j+j_move
+                j_cand = j + j_move
                 if i_move != 0 or j_move != 0:
                     if j_cand >= 0 and j_cand < domain_omega.shape[1]:
                         if domain_omega[i_cand, j_cand] == _env.NODE_INTERIOR:
-                            dist = numpy.abs(i_cand-i) + numpy.abs(j_cand-j)
+                            dist = numpy.abs(i_cand - i) + numpy.abs(j_cand - j)
                             if dist < min_dist:
                                 min_dist = dist
-                                best_cand = (i+i_move, j+j_move)
+                                best_cand = (i + i_move, j + j_move)
     return best_cand
 
 
@@ -501,17 +546,25 @@ def compute_robin_condition_down(domain, u, space_step, beta_rob, alpha_rob):
                 east = is_on_robin_boundary(domain[i, j + 1])
                 west = is_on_robin_boundary(domain[i, j - 1])
                 if north:
-                    value[i - 1, j] += beta_rob[i - 1, j] * (u[i, j] - u[i - 1, j]) / h + alpha_rob[
-                        i - 1, j] * (u[i - 1, j] + u[i, j]) / 2
+                    value[i - 1, j] += (
+                        beta_rob[i - 1, j] * (u[i, j] - u[i - 1, j]) / h
+                        + alpha_rob[i - 1, j] * (u[i - 1, j] + u[i, j]) / 2
+                    )
                 if south:
-                    value[i + 1, j] += beta_rob[i + 1, j] * (u[i, j] - u[i + 1, j]) / h + alpha_rob[
-                        i + 1, j] * (u[i + 1, j] + u[i, j]) / 2
+                    value[i + 1, j] += (
+                        beta_rob[i + 1, j] * (u[i, j] - u[i + 1, j]) / h
+                        + alpha_rob[i + 1, j] * (u[i + 1, j] + u[i, j]) / 2
+                    )
                 if east:
-                    value[i, j + 1] += beta_rob[i, j + 1] * (u[i, j] - u[i, j + 1]) / h + alpha_rob[
-                        i, j + 1] * (u[i, j + 1] + u[i, j]) / 2
+                    value[i, j + 1] += (
+                        beta_rob[i, j + 1] * (u[i, j] - u[i, j + 1]) / h
+                        + alpha_rob[i, j + 1] * (u[i, j + 1] + u[i, j]) / 2
+                    )
                 if west:
-                    value[i, j - 1] += beta_rob[i, j - 1] * (u[i, j] - u[i, j - 1]) / h + alpha_rob[
-                        i, j - 1] * (u[i, j - 1] + u[i, j]) / 2
+                    value[i, j - 1] += (
+                        beta_rob[i, j - 1] * (u[i, j] - u[i, j - 1]) / h
+                        + alpha_rob[i, j - 1] * (u[i, j - 1] + u[i, j]) / 2
+                    )
 
     return value
 
@@ -541,17 +594,25 @@ def compute_robin_condition_up(domain, u, space_step, beta_rob, alpha_rob):
                 east = is_on_robin_boundary(domain[i, j + 1])
                 west = is_on_robin_boundary(domain[i, j - 1])
                 if north:
-                    value[i - 1, j] += beta_rob[i - 1, j] * (u[i, j] - u[i - 1, j]) / h + alpha_rob[
-                        i - 1, j] * (u[i - 1, j] + u[i, j]) / 2
+                    value[i - 1, j] += (
+                        beta_rob[i - 1, j] * (u[i, j] - u[i - 1, j]) / h
+                        + alpha_rob[i - 1, j] * (u[i - 1, j] + u[i, j]) / 2
+                    )
                 if south:
-                    value[i + 1, j] += beta_rob[i + 1, j] * (u[i, j] - u[i + 1, j]) / h + alpha_rob[
-                        i + 1, j] * (u[i + 1, j] + u[i, j]) / 2
+                    value[i + 1, j] += (
+                        beta_rob[i + 1, j] * (u[i, j] - u[i + 1, j]) / h
+                        + alpha_rob[i + 1, j] * (u[i + 1, j] + u[i, j]) / 2
+                    )
                 if east:
-                    value[i, j + 1] += beta_rob[i, j + 1] * (u[i, j] - u[i, j + 1]) / h + alpha_rob[
-                        i, j + 1] * (u[i, j + 1] + u[i, j]) / 2
+                    value[i, j + 1] += (
+                        beta_rob[i, j + 1] * (u[i, j] - u[i, j + 1]) / h
+                        + alpha_rob[i, j + 1] * (u[i, j + 1] + u[i, j]) / 2
+                    )
                 if west:
-                    value[i, j - 1] += beta_rob[i, j - 1] * (u[i, j] - u[i, j - 1]) / h + alpha_rob[
-                        i, j - 1] * (u[i, j - 1] + u[i, j]) / 2
+                    value[i, j - 1] += (
+                        beta_rob[i, j - 1] * (u[i, j] - u[i, j - 1]) / h
+                        + alpha_rob[i, j - 1] * (u[i, j - 1] + u[i, j]) / 2
+                    )
 
     return value
 

@@ -1,0 +1,8 @@
+ALPHA: 1
+BETA: 3
+GAMMA: 1
+Q: .5
+RHO: .4
+
+NB_ITER: 50
+NB_ANTS: 20

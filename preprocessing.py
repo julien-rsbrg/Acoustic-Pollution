@@ -71,31 +71,32 @@ def _set_geometry_of_domain(M, N, level=0):
     # attention version avec/sans les fractales
     domain_omega[0:M, 0:N] = _env.NODE_INTERIOR  # interior
     domain_omega[0, 0:N] = _env.NODE_DIRICHLET  # north
-    domain_omega[M-1, 0:N] = _env.NODE_NEUMANN  # south
+    domain_omega[M - 1, 0:N] = _env.NODE_NEUMANN  # south
     domain_omega[0:M, 0] = _env.NODE_NEUMANN  # west
     domain_omega[0:M, N - 1] = _env.NODE_NEUMANN  # east
 
     if level == 0:
         domain_omega[N, 0:N] = _env.NODE_ROBIN  # south
     else:
-        domain_omega[M-1, 0:N] = _env.NODE_NEUMANN  # south
+        domain_omega[M - 1, 0:N] = _env.NODE_NEUMANN  # south
 
     # -- define fractal
     nodes = create_fractal_nodes(
-        [numpy.array([[0], [N]]), numpy.array([[N], [N]])], level)
+        [numpy.array([[0], [N]]), numpy.array([[N], [N]])], level
+    )
     x, y = create_fractal_coordinates(nodes, domain_omega)
     x_plot = numpy.zeros(len(x) - 1, dtype=numpy.float64)
     y_plot = numpy.zeros(len(x) - 1, dtype=numpy.float64)
 
     # -- plot fractal
-    #matplotlib.pyplot.plot(x, y)
+    # matplotlib.pyplot.plot(x, y)
     # matplotlib.pyplot.title('Fractal')
     # matplotlib.pyplot.show()
 
     # -- define smaller geometry to take into account the fractal as boundary condition
     for k in range(0, len(x) - 1):
         domain_omega[int(y[k]), int(x[k])] = _env.NODE_ROBIN
-    seed1 = [M-2, N-2]
+    seed1 = [M - 2, N - 2]
     domain_omega = partition_domain(domain_omega, seed1)
 
     return domain_omega, x, y, x_plot, y_plot
@@ -106,6 +107,17 @@ def _set_chi(M, N, x, y):
     # k_begin, k_end = 0, len(x)-1
     k_begin = (len(x) - 1) // 5
     k_end = 3 * (len(x) - 1) // 5
+    val = 1.0
+    for k in range(k_begin, k_end):
+        chi[int(y[k]), int(x[k])] = val
+    return chi
+
+
+def _set_fulled_chi(M, N, x, y):
+    chi = numpy.zeros((M, N), dtype=numpy.float64)
+    k_begin, k_end = 0, len(x) - 1
+    # k_begin = (len(x) - 1) // 5
+    # k_end = 3 * (len(x) - 1) // 5
     val = 1.0
     for k in range(k_begin, k_end):
         chi[int(y[k]), int(x[k])] = val
@@ -125,8 +137,9 @@ def create_motif_koch(A, B):
     """
 
     alpha = numpy.pi / 2.0
-    radius = numpy.array([[numpy.cos(alpha), -numpy.sin(alpha)],
-                          [numpy.sin(alpha), numpy.cos(alpha)]])
+    radius = numpy.array(
+        [[numpy.cos(alpha), -numpy.sin(alpha)], [numpy.sin(alpha), numpy.cos(alpha)]]
+    )
     distance = (B - A) / 4.0
     C = A + distance
     D = C + numpy.dot(radius, distance)
@@ -233,9 +246,9 @@ def is_on_boundary(node):
     """
 
     if node not in [_env.NODE_ROBIN, _env.NODE_NEUMANN, _env.NODE_DIRICHLET]:
-        return 'NOT BOUNDARY'
+        return "NOT BOUNDARY"
     else:
-        return 'BOUNDARY'
+        return "BOUNDARY"
 
 
 def partition_domain(domain, seed):
@@ -250,8 +263,8 @@ def partition_domain(domain, seed):
     Neighbours = [seed]
     Visited = []
 
-    if is_on_boundary(domain[seed[0], seed[1]]) == 'BOUNDARY':
-        return 'Error: choose another point for seed'
+    if is_on_boundary(domain[seed[0], seed[1]]) == "BOUNDARY":
+        return "Error: choose another point for seed"
 
     else:
         count = 0
@@ -264,22 +277,22 @@ def partition_domain(domain, seed):
                 if j == 0:  # Il n'y a pas d'ouest
                     south = [i + 1, j]
                     east = [i, j + 1]
-                    a = 'Not Exist'
+                    a = "Not Exist"
                     b = is_on_boundary(domain[south[0], south[1]])
                     c = is_on_boundary(domain[east[0], east[1]])
-                    d = 'Not Exist'
+                    d = "Not Exist"
                 elif j == N - 1:  # Il n'y a pas d'est
                     south = [i + 1, j]
                     west = [i, j - 1]
-                    a = 'Not Exist'
+                    a = "Not Exist"
                     b = is_on_boundary(domain[south[0], south[1]])
-                    c = 'Not Exist'
+                    c = "Not Exist"
                     d = is_on_boundary(domain[west[0], west[1]])
                 else:
                     south = [i + 1, j]
                     west = [i, j - 1]
                     east = [i, j + 1]
-                    a = 'Not Exist'
+                    a = "Not Exist"
                     b = is_on_boundary(domain[south[0], south[1]])
                     c = is_on_boundary(domain[east[0], east[1]])
                     d = is_on_boundary(domain[west[0], west[1]])
@@ -288,62 +301,62 @@ def partition_domain(domain, seed):
                     north = [i - 1, j]
                     east = [i, j + 1]
                     a = is_on_boundary(domain[north[0], north[1]])
-                    b = 'Not Exist'
+                    b = "Not Exist"
                     c = is_on_boundary(domain[east[0], east[1]])
-                    d = 'Not Exist'
+                    d = "Not Exist"
                 elif j == N - 1:  # Il n'y a pas d'est
                     north = [i - 1, j]
                     west = [i, j - 1]
                     a = is_on_boundary(domain[north[0], north[1]])
-                    b = 'Not Exist'
-                    c = 'Not Exist'
+                    b = "Not Exist"
+                    c = "Not Exist"
                     d = is_on_boundary(domain[west[0], west[1]])
                 else:
                     north = [i - 1, j]
                     west = [i, j - 1]
                     east = [i, j + 1]
                     a = is_on_boundary(domain[north[0], north[1]])
-                    b = 'Not Exist'
+                    b = "Not Exist"
                     c = is_on_boundary(domain[east[0], east[1]])
                     d = is_on_boundary(domain[west[0], west[1]])
             elif j == N - 1:  # Il n'y a pas de est
                 if i == 0:  # Il n'y a pas de nord
                     south = [i + 1, j]
                     west = [i, j - 1]
-                    a = 'Not Exist'
+                    a = "Not Exist"
                     b = is_on_boundary(domain[south[0], south[1]])
-                    c = 'Not Exist'
+                    c = "Not Exist"
                     d = is_on_boundary(domain[west[0], west[1]])
                 elif i == N - 1:  # Il n'y a pas de sud
                     north = [i - 1, j]
                     west = [i, j - 1]
                     a = is_on_boundary(domain[north[0], north[1]])
-                    b = 'Not Exist'
-                    c = 'Not Exist'
+                    b = "Not Exist"
+                    c = "Not Exist"
                     d = is_on_boundary(domain[west[0], west[1]])
                 else:
                     north = [i - 1, j]
                     south = [i + 1, j]
                     west = [i, j - 1]
                     a = is_on_boundary(domain[north[0], north[1]])
-                    b = 'Not Exist'
+                    b = "Not Exist"
                     c = is_on_boundary(domain[east[0], east[1]])
                     d = is_on_boundary(domain[west[0], west[1]])
             elif j == 0:  # Il n'y a pas d'ouest
                 if i == 0:  # Il n'y a pas de nord
                     south = [i + 1, j]
                     east = [i, j + 1]
-                    a = 'Not Exist'
+                    a = "Not Exist"
                     b = is_on_boundary(domain[south[0], south[1]])
                     c = is_on_boundary(domain[east[0], east[1]])
-                    d = 'Not Exist'
+                    d = "Not Exist"
                 elif i == N - 1:  # Il n'y a pas de sud
                     north = [i - 1, j]
                     east = [i, j + 1]
                     a = is_on_boundary(domain[north[0], north[1]])
-                    b = 'Not Exist'
+                    b = "Not Exist"
                     c = is_on_boundary(domain[east[0], east[1]])
-                    d = 'Not Exist'
+                    d = "Not Exist"
                 else:
                     north = [i - 1, j]
                     south = [i + 1, j]
@@ -351,7 +364,7 @@ def partition_domain(domain, seed):
                     a = is_on_boundary(domain[north[0], north[1]])
                     b = is_on_boundary(domain[south[0], south[1]])
                     c = is_on_boundary(domain[east[0], east[1]])
-                    d = 'Not Exist'
+                    d = "Not Exist"
 
             else:
                 north = [i - 1, j]
@@ -368,13 +381,13 @@ def partition_domain(domain, seed):
             Visited.append([i, j])
             count += 1
 
-            if a == 'NOT BOUNDARY' and north not in Visited and north not in Neighbours:
+            if a == "NOT BOUNDARY" and north not in Visited and north not in Neighbours:
                 Neighbours.append(north)
-            if b == 'NOT BOUNDARY' and south not in Visited and south not in Neighbours:
+            if b == "NOT BOUNDARY" and south not in Visited and south not in Neighbours:
                 Neighbours.append(south)
-            if c == 'NOT BOUNDARY' and east not in Visited and east not in Neighbours:
+            if c == "NOT BOUNDARY" and east not in Visited and east not in Neighbours:
                 Neighbours.append(east)
-            if d == 'NOT BOUNDARY' and west not in Visited and west not in Neighbours:
+            if d == "NOT BOUNDARY" and west not in Visited and west not in Neighbours:
                 Neighbours.append(west)
             if count > M * N:
                 return Neighbours, Visited

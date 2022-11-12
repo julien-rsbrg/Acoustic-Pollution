@@ -480,19 +480,26 @@ def solve_helmholtz(
         u[M - 1, j] = u[M - 2, j]
     for i in range(2, M - 2):
         for j in range(2, N - 2):
+
             if not is_in_interior_domain(domain[i, j]):
-                avg = 0
-                count = 0
-                for i_lag in range(-2, 3):
-                    for j_lag in range(-2, 3):
-                        if (i_lag, j_lag) != (0, 0) and is_in_interior_domain(
-                            domain[i + i_lag, j + j_lag]
-                        ):
-                            count += 1
-                            avg += u[i + i_lag, j + j_lag]
-                if count != 0:
-                    avg = avg / count
-                u[i, j] = avg
+                if (
+                    is_in_interior_domain(domain[i, j + 1])
+                    or is_in_interior_domain(domain[i, j - 1])
+                    or is_in_interior_domain(domain[i + 1, j])
+                    or is_in_interior_domain(domain[i - 1, j])
+                ):
+                    avg = 0
+                    count = 0
+                    for i_lag in range(-2, 3):
+                        for j_lag in range(-2, 3):
+                            if (i_lag, j_lag) != (0, 0) and is_in_interior_domain(
+                                domain[i + i_lag, j + j_lag]
+                            ):
+                                count += 1
+                                avg += u[i + i_lag, j + j_lag]
+                    if count != 0:
+                        avg = avg / count
+                    u[i, j] = avg
 
     return u
 

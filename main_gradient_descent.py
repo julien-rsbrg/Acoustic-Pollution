@@ -227,7 +227,7 @@ if __name__ == "__main__":
     # -- set parameters of the geometry
     N = 50  # number of points along x-axis
     M = 2 * N  # number of points along y-axis
-    level = 2  # level of the fractal
+    level = 0  # level of the fractal
     spacestep = 1.0 / N  # mesh size
 
     # -- set parameters of the partial differential equation
@@ -235,7 +235,12 @@ if __name__ == "__main__":
     ky = -1.0
     # wavenumber = numpy.sqrt(kx**2 + ky**2)  # wavenumber
     # wavenumber = 10.0
-    wavenumbers = numpy.arange(start=7, stop=12, step=1 / 8)
+    # wavenumbers = numpy.arange(start=7, stop=12, step=1 / 8)
+    wavenumbers = numpy.arange(
+        start=2 * numpy.pi * 200 / 340,
+        stop=2 * numpy.pi * 1000 / 340,
+        step=2 * numpy.pi * (1000 - 200) / (340 * 30),
+    )
 
     energies_before = []
     energies_after = []

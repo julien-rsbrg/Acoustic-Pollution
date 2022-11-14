@@ -129,6 +129,16 @@ def set_full_chi(domain_omega):
     return chi
 
 
+def set_random_chi(domain_omega, raw_V_obj):
+    M, N = domain_omega.shape
+    chi = numpy.zeros((M, N))
+    frontier = fro_gen.get_indices_frontier_robin(domain_omega)
+    i_frontier_chosen = numpy.random.randint(
+        0, frontier.shape[0], int(raw_V_obj))
+    chi[frontier[i_frontier_chosen, 0], frontier[i_frontier_chosen, 1]] = 1
+    return chi
+
+
 def create_motif_koch(A, B):
     """
     Generate a Koch pattern.

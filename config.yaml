@@ -5,12 +5,12 @@ COEF_BOUND_PLOT : 1
 GEOMETRY: 
   N_POINTS_AXIS_X: 50
   LEVEL: 2
-  MATERIAL: CONCRETE
+  MATERIAL: ISOREL
   
 PDE:
   # KX: -1.0 # old code if we want to change the incidence
   # KY: -1.0
-  WAVENUMBER: 1.0
+  WAVENUMBER: 10
   INCIDENT_WAVE: planar # planar by default, you can put spherical too
 
 OPTIMIZATION:

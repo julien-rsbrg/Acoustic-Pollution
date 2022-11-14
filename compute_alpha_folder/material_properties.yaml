@@ -7,3 +7,9 @@ CONCRETE:
   phi : 0.529  # porosity
   sigma : 151429.0  # resistivity 32.5 for min 52.5 for the most resistive
   alpha_h : 1.37  # tortuosity
+
+
+ISOREL:
+  phi : 0.7  # porosity
+  sigma : 142300.0  # resistivity 32.5 for min 52.5 for the most resistive
+  alpha_h : 1.15  # tortuosity

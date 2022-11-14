@@ -1,0 +1,67 @@
+EXPERIMENT_ID: AlgoGen_domain
+DST_FOLDER: ./results/
+COEF_BOUND_PLOT : 1
+
+GEOMETRY: 
+  N_POINTS_AXIS_X: 50
+  LEVEL: 2
+  MATERIAL: CONCRETE
+  
+PDE:
+  # KX: -1.0 # old code if we want to change the incidence
+  # KY: -1.0
+  WAVENUMBER: 10.0
+  INCIDENT_WAVE: planar # planar by default, you can put spherical too
+
+OPTIMIZATION:
+  GRAD_DESCENT_CHI:
+    NBRE_ITER: 10
+
+    # learning rate 
+    INIT_MU: 0.5
+    MIN_MU: 1.0e-10
+
+    # Volume inside domain
+    MU1_VOLUME_CONSTRAINT: 0
+
+    # Volume of porous material
+    TOLERANCE_ERROR_VOLUME_CHI: 1.0e-3
+    STEP_LAGRANGE_MULTIPLIER: 1.0e-3
+
+
+  # Wolf Search Algorithm domain shape optimization
+  WSA_DOMAIN:
+    LEVEL_INIT: 0
+
+    N_WOLVES : 20
+    EPOCHS: 100
+    PATIENCE_EARLY_STOPPING: 10
+    TOL_EARLY_STOPPING: 2
+    nbre_iter_gen_domain: 300
+
+
+    radius_visual_area: 2
+    escape_step_size: 1.5
+    velocity_factor: 0.25
+    proba_enemy_appear: 0.1
+    prey_search_perseverance: 3
+    prey_iter: 300
+    prey_score_gap_to_hunt: 5.0e-2
+    score_fn_to_maximise: energy_minus
+    max_memory_len: 3
+
+  # AlgoGen Algorithm domain shape optimization
+  ALGO_GEN_DOMAIN:
+    LEVEL_INIT: 0
+    
+    EPOCHS: 100
+    N_INDIV: 100
+    nbre_iter_gen_domain: 300
+
+    velocity_factor_max: 3
+    velocity_factor_min: 0.1
+
+    RATIO_REPRODUCE: 0.2
+    score_fn_to_maximise: energy_minus
+    
+

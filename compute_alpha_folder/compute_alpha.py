@@ -39,6 +39,7 @@ def compute_alpha(omega, material):
     w is called circular frequency
     f is called frequency
     """
+    print("--- compute_alpha ---")
 
     # parameters of the material
     phi = 0.0

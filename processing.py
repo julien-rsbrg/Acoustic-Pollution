@@ -407,7 +407,7 @@ def solve_helmholtz(domain, space_step, omega,
     mat, rhs = compute_robin_condition(
         domain, space_step, f_rob, alpha_rob, beta_rob, beta_pde, mat, rhs)
 
-    print(mat.shape[:])
+    # print(mat.shape[:])
 
     # -- solve linear system
     sol = scipy.sparse.linalg.spsolve(mat, rhs)

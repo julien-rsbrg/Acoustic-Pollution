@@ -5,6 +5,8 @@
 import matplotlib.pyplot
 import numpy
 import os
+from copy import deepcopy
+
 import yaml
 from yaml.loader import SafeLoader
 
@@ -16,18 +18,33 @@ import _env
 import preprocessing
 import processing
 import postprocessing
+import utils
 # import solutions
 
 
-def clip(values, vmin, vmax):
-    clipped_values = numpy.where(values >= vmin, values, vmin)
-    clipped_values = numpy.where(clipped_values >= vmax, vmax, clipped_values)
-    return clipped_values
+def discretize_chi(domain_omega, chi, step_threshold=1e-3, nbre_iter_max=1000):
+    S = numpy.sum(numpy.where(domain_omega == _env.NODE_ROBIN, 1, 0))
+    V_obj = numpy.sum(chi)/S
+
+    threshold = 0.5
+    discretized_chi = deepcopy(chi)
+    discretized_chi = numpy.where(chi > threshold, 1, 0)
+    V_disc = numpy.sum(discretized_chi)/S
+    k = 0
+    while V_disc != V_obj and k < nbre_iter_max:
+        if V_disc < V_obj:
+            threshold -= step_threshold
+        else:
+            threshold += step_threshold
+        discretized_chi = numpy.where(chi > threshold, 1, 0)
+        V_disc = numpy.sum(discretized_chi)/S
+        k += 1
+    return discretized_chi
 
 
-def your_optimization_procedure(domain_omega, spacestep, wavenumber, f, f_dir, f_neu, f_rob,
-                                beta_pde, alpha_pde, alpha_dir, beta_neu, beta_rob, alpha_rob,
-                                Alpha, mu, chi, V_obj, mu1, V_0):
+def optimization_procedure(domain_omega, spacestep, wavenumber, f, f_dir, f_neu, f_rob,
+                           beta_pde, alpha_pde, alpha_dir, beta_neu, beta_rob, alpha_rob,
+                           Alpha, mu, chi, V_obj, mu1, V_0):
     """This function return the optimized density.
 
     Parameter:
@@ -39,12 +56,12 @@ def your_optimization_procedure(domain_omega, spacestep, wavenumber, f, f_dir, f
         the domain (not really important for our case, you can set it up to 0);
         V_0: float, volume constraint on the domain (you can set it up to 1).
     """
-    min_mu = config["OPTIMIZATION"]["MIN_MU"]
-    tol_err_vol_chi = config["OPTIMIZATION"]["TOLERANCE_ERROR_VOLUME_CHI"]
-    step_lagrange_mult = config["OPTIMIZATION"]["STEP_LAGRANGE_MULTIPLIER"]
+    min_mu = config["OPTIMIZATION"]["GRAD_DESCENT_CHI"]["MIN_MU"]
+    tol_err_vol_chi = config["OPTIMIZATION"]["GRAD_DESCENT_CHI"]["TOLERANCE_ERROR_VOLUME_CHI"]
+    step_lagrange_mult = config["OPTIMIZATION"]["GRAD_DESCENT_CHI"]["STEP_LAGRANGE_MULTIPLIER"]
     S = numpy.sum(numpy.where(domain_omega == _env.NODE_ROBIN, 1, 0))
     k = 0
-    numb_iter = config["OPTIMIZATION"]["NBRE_ITER"]
+    numb_iter = config["OPTIMIZATION"]["GRAD_DESCENT_CHI"]["NBRE_ITER"]
 
     # energy = numpy.zeros((numb_iter+1, 1), dtype=numpy.float64)
     while k < numb_iter and mu > min_mu:
@@ -63,8 +80,7 @@ def your_optimization_procedure(domain_omega, spacestep, wavenumber, f, f_dir, f
         q = processing.enable_trace_robin_fn(q, domain_omega)
 
         print('3. computing objective function, i.e., energy')
-        energy_k = your_compute_objective_function(
-            domain_omega, u, spacestep, mu1, V_0)
+        energy_k = utils.compute_energy(u, spacestep)
         if k == 0:
             energy = numpy.array([[energy_k]])
         else:
@@ -88,7 +104,7 @@ def your_optimization_procedure(domain_omega, spacestep, wavenumber, f, f_dir, f
                 new_chi_without_constraint, domain_omega)
             # print('    b. computing projected gradient')
 
-            new_chi = clip(
+            new_chi = utils.clip(
                 new_chi_without_constraint+lagrange_mult, 0, 1)
 
             integre_chi = numpy.sum(
@@ -102,7 +118,7 @@ def your_optimization_procedure(domain_omega, spacestep, wavenumber, f, f_dir, f
                     lagrange_mult -= step_lagrange_mult
                 else:
                     lagrange_mult += step_lagrange_mult
-                new_chi = clip(
+                new_chi = utils.clip(
                     new_chi_without_constraint+lagrange_mult, 0, 1)
                 # assert numpy.min(chi) >= 0, numpy.min(chi)
                 new_chi = preprocessing.set2zero(
@@ -111,12 +127,11 @@ def your_optimization_procedure(domain_omega, spacestep, wavenumber, f, f_dir, f
             print()
             # print('    c. computing solution of Helmholtz problem, i.e., u')
             alpha_rob = Alpha*new_chi
-            u = processing.solve_helmholtz(domain_omega, spacestep, wavenumber, f_adj, f_dir, f_neu, f_rob,
+            u = processing.solve_helmholtz(domain_omega, spacestep, wavenumber, f, f_dir, f_neu, f_rob,
                                            beta_pde, alpha_pde, alpha_dir, beta_neu, beta_rob, alpha_rob)
             u = processing.enable_trace_robin_fn(u, domain_omega)
             print('    d. computing objective function, i.e., energy (E)')
-            ene = your_compute_objective_function(
-                domain_omega, u, spacestep, mu1, V_0)
+            ene = utils.compute_energy(u, spacestep)
             print('           ---ene', ene)
             print("           ---vs energy_k:", energy[k, 0])
             if ene < energy[-1, 0]:
@@ -131,42 +146,9 @@ def your_optimization_procedure(domain_omega, spacestep, wavenumber, f, f_dir, f
         k += 1
 
     print('end. computing solution of Helmholtz problem, i.e., u')
-
+    chi = discretize_chi(
+        domain_omega, chi, step_threshold=1e-3, nbre_iter_max=1000)
     return chi, energy, u, grad
-
-
-def get_norm_L2(u):
-    # print("           numpy.max(u@numpy.conjugate(u.T))",
-    #       numpy.max(numpy.abs(u@numpy.conjugate(u.T))))
-    return numpy.abs(numpy.trace(u@numpy.conjugate(u.T)))
-
-
-def your_compute_objective_function(domain_omega, u, spacestep, mu1, V_0):
-    """
-    This function compute the objective function:
-    J(u,domain_omega)= \int_{domain_omega}||u||^2 + mu1*(Vol(domain_omega)-V_0)
-
-    Parameter:
-        domain_omega: Matrix (NxP), it defines the domain and the shape of the
-        Robin frontier;
-        u: Matrix (NxP), it is the solution of the Helmholtz problem, we are
-        computing its energy;
-        spacestep: float, it corresponds to the step used to solve the Helmholtz
-        equation;
-        mu1: float, it is the constant that defines the importance of the volume
-        constraint;
-        V_0: float, it is a reference volume.
-    """
-
-    raw_energy = get_norm_L2(u)*(spacestep**2)
-
-    # N*N = V_0 intially
-    N = domain_omega.shape[1]
-    in_interior = numpy.where(domain_omega == _env.NODE_INTERIOR, 1, 0)
-    vol_domain_omega = numpy.sum(in_interior)/(N**2)
-    vol_constraint = vol_domain_omega*(spacestep**2)-V_0
-
-    return raw_energy + mu1*vol_constraint
 
 
 if __name__ == '__main__':
@@ -229,9 +211,10 @@ if __name__ == '__main__':
     V_0 = 1  # initial volume of the domain
     V_obj = numpy.sum(chi) / S  # constraint on the density
     print("V_obj:", V_obj)
-    mu = config["OPTIMIZATION"]["INIT_MU"]  # initial gradient step
+    # initial gradient step
+    mu = config["OPTIMIZATION"]["GRAD_DESCENT_CHI"]["INIT_MU"]
     # parameter of the volume functional
-    mu1 = config["OPTIMIZATION"]["MU1_VOLUME_CONSTRAINT"]
+    mu1 = config["OPTIMIZATION"]["GRAD_DESCENT_CHI"]["MU1_VOLUME_CONSTRAINT"]
 
     # ----------------------------------------------------------------------
     # -- Do not modify this cell, these are the values that you will be assessed against.
@@ -248,9 +231,9 @@ if __name__ == '__main__':
     # ----------------------------------------------------------------------
     # -- compute optimization
     energy = numpy.zeros((100+1, 1), dtype=numpy.float64)
-    chi, energy, u, grad = your_optimization_procedure(domain_omega, spacestep, wavenumber, f, f_dir, f_neu, f_rob,
-                                                       beta_pde, alpha_pde, alpha_dir, beta_neu, beta_rob, alpha_rob,
-                                                       Alpha, mu, chi, V_obj, mu1, V_0)
+    chi, energy, u, grad = optimization_procedure(domain_omega, spacestep, wavenumber, f, f_dir, f_neu, f_rob,
+                                                  beta_pde, alpha_pde, alpha_dir, beta_neu, beta_rob, alpha_rob,
+                                                  Alpha, mu, chi, V_obj, mu1, V_0)
 
     # --- end of optimization
     chin = chi.copy()
@@ -266,5 +249,9 @@ if __name__ == '__main__':
 
     # print('min energy:', numpy.min(energy))
     print("max|chi0-chin|:", numpy.max(numpy.abs(chi0-chin)))
+    print('volume diff of chi:', (numpy.sum(chin)-numpy.sum(chi0))/S)
     print("energy:", energy)
+    u0, un = numpy.real(u0), numpy.real(un)
+    print("min u0, max u0, min un, max un:\n", numpy.min(
+        u0), numpy.max(u0), numpy.min(un), numpy.max(un))
     print('End.')

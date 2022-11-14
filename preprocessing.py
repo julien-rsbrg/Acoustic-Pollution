@@ -50,6 +50,15 @@ def _set_coefficients_of_pde(M, N):
     return beta_pde, alpha_pde, alpha_dir, beta_neu, alpha_rob, beta_rob
 
 
+def reset_boundary_env(domain_omega):
+    M, N = domain_omega.shape
+    domain_omega[0, 0:N] = _env.NODE_DIRICHLET  # north
+    domain_omega[M-1, 0:N] = _env.NODE_NEUMANN  # south
+    domain_omega[0:M, 0] = _env.NODE_NEUMANN  # west
+    domain_omega[0:M, N - 1] = _env.NODE_NEUMANN  # east
+    return domain_omega
+
+
 def _set_rhs_of_pde(M, N):
     f = numpy.zeros((M, N), dtype=numpy.complex128)
     f_dir = numpy.zeros((M, N), dtype=numpy.complex128)
@@ -70,10 +79,7 @@ def _set_geometry_of_domain(M, N, level=0):
 
     # attention version avec/sans les fractales
     domain_omega[0:M, 0:N] = _env.NODE_INTERIOR  # interior
-    domain_omega[0, 0:N] = _env.NODE_DIRICHLET  # north
-    domain_omega[M-1, 0:N] = _env.NODE_NEUMANN  # south
-    domain_omega[0:M, 0] = _env.NODE_NEUMANN  # west
-    domain_omega[0:M, N - 1] = _env.NODE_NEUMANN  # east
+    domain_omega = reset_boundary_env(domain_omega)
 
     if level == 0:
         domain_omega[N, 0:N] = _env.NODE_ROBIN  # south
@@ -101,14 +107,25 @@ def _set_geometry_of_domain(M, N, level=0):
     return domain_omega, x, y, x_plot, y_plot
 
 
-def _set_chi(M, N, x, y):
+def _set_chi(M, N, x, y, all_recovered=False):
     chi = numpy.zeros((M, N), dtype=numpy.float64)
     # k_begin, k_end = 0, len(x)-1
-    k_begin = (len(x) - 1) // 5
-    k_end = 3 * (len(x) - 1) // 5
+    if not (all_recovered):
+        k_begin = (len(x) - 1) // 5
+        k_end = 3 * (len(x) - 1) // 5
+    else:
+        k_begin, k_end = 0, x.shape[0]
+
     val = 1.0
     for k in range(k_begin, k_end):
         chi[int(y[k]), int(x[k])] = val
+    return chi
+
+
+def set_full_chi(domain_omega):
+    M, N = domain_omega.shape
+    chi = numpy.zeros((M, N))
+    chi[numpy.where(domain_omega == _env.NODE_ROBIN)] = 1
     return chi
 
 
